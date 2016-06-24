@@ -1,0 +1,20 @@
+-lib om.core
+-lib om.color
+-lib om.tween
+-lib chrome-app
+-cp src
+-dce full
+-debug
+--each
+
+--next
+-js build/cra/background.js
+-main dsotm.cra.Background
+-cmd cp res/cra/app.html build/cra
+-cmd cp res/cra/manifest.json build/cra
+-cmd cp -r res/icon build/cra
+-cmd lessc res/style/dsotm.less build/cra/app.css
+
+--next
+-js build/cra/app.js
+-main dsotm.cra.App
