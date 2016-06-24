@@ -15,7 +15,7 @@ class App {
 
 	static function update( time : Float ) {
 		window.requestAnimationFrame( update );
-		om.Tween.step( time );
+		//om.Tween.step( time );
 	}
 
 	static function handleWindowClose() {
@@ -41,7 +41,7 @@ class App {
 				for( device in devices ) {
 
 					var connectButton = document.createButtonElement();
-					connectButton.textContent = 'CONNECT';
+					connectButton.textContent = device.displayName +' : '+ device.path;
 					connectButton.onclick = function(){
 
 						connectButton.remove();
@@ -49,11 +49,11 @@ class App {
 						var controller = new Controller();
 						controllers.push( controller );
 						controller.connect( device, function(){
-							trace("connected");
 
-							controller.setColor( [0,255,0] );
+							trace( 'Serial connected' );
 
-							//controller.sendInt(-1);
+							controller.setColor( [255,255,255] );
+
 						});
 
 						/*
@@ -79,46 +79,8 @@ class App {
 						document.body.appendChild( controller.element );
 					}
 					document.body.appendChild( connectButton );
-
 				}
-
-				/*
-				var device = devices[0];
-
-				Serial.connect( device.path, { bitrate: 57600 }, function(info:ConnectionInfo){
-
-					connectionId = info.connectionId;
-
-					Serial.onReceive.addListener( function(r){
-						trace( 'ARDUINO: '+ ArrayBufferUtil.ab2str(r.data) );
-					} );
-				});
-				*/
-
-				//trace( devices[0] );
-
-			//	var control = new DeviceControl( devices[0], 0, 64 );
-			//	document.body.appendChild( control.element );
-			//	control.connect( 115200 );
-
-				/*
-				var deviceListElement = document.createDivElement();
-				deviceListElement.classList.add( 'device-list' );
-				document.body.appendChild( deviceListElement );
-
-				for( device in devices ) {
-
-				var e = document.createDivElement();
-				e.textContent = device.path;
-				document.body.appendChild( deviceListElement );
-
-				//var control = new DeviceControl( devices[0], 0, 64 );
-				//document.body.appendChild( control.element );
-				//control.connect( 115200 );
-			}
-			*/
-
 			});
 		}
-		}
+	}
 }

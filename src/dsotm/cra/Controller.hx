@@ -49,13 +49,29 @@ class Controller {
 
 	public function setColor( color : RGB ) {
 
-		trace('setRGB '+color.r+":"+color.g+":"+color.b );
+		//trace( 'setColor '+color.r+":"+color.g+":"+color.b );
 
+		var buf = new ArrayBuffer(4);
+		var view = new Uint8Array( buf );
+		view.set( [0,color.r,color.g,color.b], 0 );
+		Serial.send( connectionId, buf, function(r){
+			trace(r);
+		});
+
+		/*
+		var str = color.toArray().join(',');
+		Serial.send( connectionId, str2ab( str ), function(r){
+			trace(r);
+		});
+		*/
+
+		/*
 		var str = color.toArray().join(',')+',';
 
 		Serial.send( connectionId, str2ab( str ), function(r){
 
 		});
+		*/
 
 		/*
 		var buf = new ArrayBuffer(1);
@@ -97,6 +113,7 @@ class Controller {
 		*/
 	}
 
+	/*
 	function sendIntArray( arr : Array<Int> ) {
 		var buf = new ArrayBuffer( arr.length );
 		var view = new Uint8Array( buf );
@@ -118,6 +135,7 @@ class Controller {
 		Serial.send( connectionId, str2ab( str ) , function(e){
 		});
 	}
+	*/
 
 	function handleError( e ) {
 		trace(e);
@@ -125,7 +143,8 @@ class Controller {
 
 	function handleData( r ) {
 
-		trace( ab2str(r.data) );
+		trace( ab2str( r.data ) );
+
 		/*
 		var view = new js.html.Uint8Array( r.data );
 		trace( view.get(0) );
