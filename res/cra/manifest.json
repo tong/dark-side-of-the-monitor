@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "DarkSideOfTheMonitor",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Monitor backlight controller",
 	"app": {
 		"background": { "scripts": ["background.js"] }

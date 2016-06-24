@@ -1,0 +1,7 @@
+-js build/cli/dark-side-of-the-monitor.js
+-main dsotm.cli.App
+-cp src
+-lib om.core
+-lib om.color
+-lib hxnodejs
+-lib hxnodejs-serialport

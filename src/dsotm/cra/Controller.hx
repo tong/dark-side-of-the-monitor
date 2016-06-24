@@ -4,6 +4,7 @@ import js.Browser.document;
 import js.Browser.document;
 import js.html.ArrayBuffer;
 import js.html.DivElement;
+import js.html.ButtonElement;
 import js.html.Uint8Array;
 import dsotm.gui.ColorPicker;
 import chrome.Serial;
@@ -17,8 +18,11 @@ class Controller {
 
 	public var element(default,null) : DivElement;
 
+	var button : ButtonElement;
 	var colorPicker : ColorPicker;
+
 	var connectionId : Int;
+	var ready = false;
 
 	public function new() {
 
@@ -39,13 +43,38 @@ class Controller {
 
 				connectionId = info.connectionId;
 
-				Serial.onReceive.addListener( handleData );
+				Serial.onReceive.addListener( function(r){
+					trace( ab2str( r.data ) );
+
+					/*
+
+					if( !ready ) {
+						trace(r.data);
+						if( r.data.byteLength == 1 ) {
+							ready = true;
+							callback();
+						}
+						//trace( ab2str( r.data ) );
+						//var view = new js.html.Int16Array( r.data );
+						//trace(view);
+						//trace(view.get(0));
+						//ready = true;
+					} else {
+
+						trace( ab2str( r.data ) );
+					}
+					*/
+
+				});
+
 				Serial.onReceiveError.addListener( handleError );
 
 				callback();
 			});
 		}
 	}
+
+	//public function receive( str : String ) {}
 
 	public function setColor( color : RGB ) {
 
@@ -140,21 +169,4 @@ class Controller {
 	function handleError( e ) {
 		trace(e);
 	}
-
-	function handleData( r ) {
-
-		trace( ab2str( r.data ) );
-
-		/*
-		var view = new js.html.Uint8Array( r.data );
-		trace( view.get(0) );
-		trace( view.get(0) );
-		var i = new haxe.io.BytesInput( haxe.io.Bytes.ofData(r.data) );
-		var rgb = new RGB( i.readInt32() );
-		trace( rgb );
-		*/
-
-	}
-
-
 }

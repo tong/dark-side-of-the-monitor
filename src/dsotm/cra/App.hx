@@ -52,8 +52,9 @@ class App {
 
 							trace( 'Serial connected' );
 
-							controller.setColor( [255,255,255] );
-
+							haxe.Timer.delay(function(){
+								controller.setColor( [0,0,255] );
+							},3000);
 						});
 
 						/*
