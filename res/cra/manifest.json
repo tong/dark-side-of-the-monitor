@@ -12,6 +12,7 @@
     ],
 	"icons": {
 	   "16": "icon/dsotm-16.png",
-	   "128": "icon/dsotm-16.png"
+	   "128": "icon/dsotm-128.png",
+	   "512": "icon/dsotm-512.png"
    }
 }
