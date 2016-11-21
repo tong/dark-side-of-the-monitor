@@ -8,13 +8,13 @@
 --each
 
 --next
--js build/cra/background.js
+-js bin/cra/background.js
 -main dsotm.cra.Background
--cmd cp res/cra/app.html build/cra
--cmd cp res/cra/manifest.json build/cra
--cmd cp -r res/icon build/cra
--cmd lessc res/style/dsotm.less build/cra/app.css
+-cmd cp res/cra/app.html bin/cra
+-cmd cp res/cra/manifest.json bin/cra
+-cmd cp -r res/icon bin/cra
+-cmd lessc res/style/dsotm.less bin/cra/app.css
 
 --next
--js build/cra/app.js
+-js bin/cra/app.js
 -main dsotm.cra.App

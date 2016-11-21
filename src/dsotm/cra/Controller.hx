@@ -16,19 +16,26 @@ class Controller {
 	public var connected(get,null) = false;
 	inline function get_connected() : Bool return connectionId != null;
 
+	public var ready(default,null) = false;
+	public var connectionId(default,null) : Int;
 	public var element(default,null) : DivElement;
 
 	var button : ButtonElement;
+	var hexValue : DivElement;
 	var colorPicker : ColorPicker;
 
-	var connectionId : Int;
-	var ready = false;
+	//var ready = false;
+	var onReady : Void->Void;
 
 	public function new() {
 
 		element = document.createDivElement();
 
-		colorPicker = new ColorPicker( 200, 200 );
+		hexValue = document.createDivElement();
+		hexValue.textContent = 'CONNECTING ...';
+		element.appendChild( hexValue );
+
+		colorPicker = new ColorPicker();
 		colorPicker.onSelect = function(color:Array<Int>){
 			setColor( color );
 		}
@@ -43,48 +50,81 @@ class Controller {
 
 				connectionId = info.connectionId;
 
+				hexValue.textContent = 'SERIAL CONNECTED; WAITING FOR READY SIGNAL';
+
+				callback();
+
+				/*
+				haxe.Timer.delay(function(){
+					writeIntArray( [3], function(){
+						hexValue.textContent = 'READY';
+						callback();
+					});
+				}, 3000 );
+				*/
+
+				/*
 				Serial.onReceive.addListener( function(r){
-					trace( ab2str( r.data ) );
-
-					/*
-
+					var str = ab2str( r.data );
+					trace( str );
 					if( !ready ) {
-						trace(r.data);
-						if( r.data.byteLength == 1 ) {
+						if( str != 'READY' ) {
+							trace("SOULD BE: READY but is not");
+						} else {
 							ready = true;
-							callback();
 						}
-						//trace( ab2str( r.data ) );
-						//var view = new js.html.Int16Array( r.data );
-						//trace(view);
-						//trace(view.get(0));
-						//ready = true;
-					} else {
-
-						trace( ab2str( r.data ) );
 					}
-					*/
-
 				});
 
 				Serial.onReceiveError.addListener( handleError );
+				*/
 
-				callback();
+				//callback();
+
+				/*
+				trace("IIIIINIT....");
+				haxe.Timer.delay(function(){
+					//controller.setColor( [0,0,255] );
+					trace("wwwwwwrite init");
+					writeIntArray( [3] );
+				},3000);
+				//trace("IIIIINIT2");
+				*/
+
 			});
 		}
 	}
 
-	//public function receive( str : String ) {}
+	/*
+	public function init( callback : Void->Void ) {
+		writeIntArray( [3], function(){
+			onReady = callback;
+		});
+	}
+	*/
 
-	public function setColor( color : RGB ) {
+	public function receive( str : String ) {
+		trace(str);
+		/*
+		if( !ready ) {
+			if( str == 'READY' ) {
+				trace("YOYOYOYO IAM REAAAAAAAAAAAADY");
+				ready = true;
+			}
+		}
+		*/
+	}
+
+	public function setColor( rgb : RGB ) {
 
 		//trace( 'setColor '+color.r+":"+color.g+":"+color.b );
 
 		var buf = new ArrayBuffer(4);
 		var view = new Uint8Array( buf );
-		view.set( [0,color.r,color.g,color.b], 0 );
+		view.set( [0,rgb.r,rgb.g,rgb.b], 0 );
 		Serial.send( connectionId, buf, function(r){
-			trace(r);
+			//trace(r);
+			hexValue.textContent = rgb.toString() +' '+ rgb.toCSS3();
 		});
 
 		/*
@@ -140,6 +180,21 @@ class Controller {
 		/*
 		sendIntArray( color );
 		*/
+	}
+
+	function writeIntArray( arr : Array<Int>, ?callback : Void->Void ) {
+		var buf = new ArrayBuffer( arr.length );
+		var view = new Uint8Array( buf );
+		view.set( arr, 0 );
+		write( buf, callback );
+	}
+
+	function write( buf : ArrayBuffer, ?callback : Void->Void ) {
+		Serial.send( connectionId, buf, function(r){
+			if( callback != null ) callback();
+			//trace(r);
+			//hexValue.textContent = rgb.toString() +' '+ rgb.toCSS3();
+		});
 	}
 
 	/*

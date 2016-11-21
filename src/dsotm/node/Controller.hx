@@ -12,11 +12,13 @@ import om.util.ArrayBufferUtil.*;
 class Controller {
 
 	var serial : SerialPort;
+	var lastSentColor : Array<Int>;
 
 	public function new() {}
 
 	public function connect( port : String, baudrate : BaudRate, callback : Error->Void ) {
-		serial = new SerialPort( port, { baudrate: baudrate, autoOpen: false }, false );
+		//serial = new SerialPort( port, { baudrate: baudrate, autoOpen: false }, false );
+		serial = new SerialPort( port, { baudrate: baudrate, autoOpen: false } );
 		serial.on( 'error', function(e) trace(e) );
 		serial.open( function(e){
 			serial.on( 'disconnect', function(e) trace(e) );
@@ -48,10 +50,15 @@ class Controller {
 	}
 
 	public function setColor( color : RGB, ?callback : Void->Void ) {
+
+		if( lastSentColor != null && color == lastSentColor )
+			return;
+
 		var buf = new ArrayBuffer(4);
 		var view = new Uint8Array( buf );
 		view.set( [0,color.r,color.g,color.b], 0 );
 		serial.write( new Buffer( buf ), function(e){
+			lastSentColor = color;
 			if( callback != null ) callback();
 			/*
 			serial.flush(function(e){

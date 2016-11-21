@@ -1,6 +1,7 @@
 package dsotm.gui;
 
 import js.Browser.document;
+import js.Browser.window;
 import js.html.DivElement;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
@@ -22,15 +23,14 @@ class ColorPicker {
 	var context : CanvasRenderingContext2D;
 	var marker : DivElement;
 
-	public function new( width : Int, height : Int, color = '#000000' ) {
-
-		//this.color = color;
+	public function new() {
 
 		element = document.createDivElement();
+		element.classList.add( 'colorpicker' );
 
 		canvas = document.createCanvasElement();
-		canvas.width = width;
-		canvas.height = height;
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
 		element.appendChild( canvas );
 
 		//marker = document.createDivElement();
@@ -44,6 +44,10 @@ class ColorPicker {
 		canvas.addEventListener( 'mousedown', handleMouseDown, false );
 		canvas.addEventListener( 'mouseup', handleMouseUp, false );
 		canvas.addEventListener( 'mouseout', handleMouseOut, false );
+
+		//var cp = document.createInputElement();
+		//cp.type = 'color';
+		//element.appendChild(cp);
 	}
 
 	public function show() {
@@ -61,25 +65,25 @@ class ColorPicker {
 	function drawColorArea() {
 
 		var gradient = context.createLinearGradient( 0, 0, canvas.width, 0 );
-		gradient.addColorStop( 0,    "rgb(255,   0,   0)" );
-		gradient.addColorStop( 0.15, "rgb(255,   0, 255)" );
-		gradient.addColorStop( 0.33, "rgb(0,     0, 255)" );
-		gradient.addColorStop( 0.49, "rgb(0,   255, 255)" );
-		gradient.addColorStop( 0.67, "rgb(0,   255,   0)" );
-		gradient.addColorStop( 0.84, "rgb(255, 255,   0)" );
-		gradient.addColorStop( 1,    "rgb(255,   0,   0)" );
+		gradient.addColorStop( 0,    "rgb( 255,   0,   0 )" );
+		gradient.addColorStop( 0.15, "rgb( 255,   0, 255 )" );
+		gradient.addColorStop( 0.33, "rgb( 0,     0, 255 )" );
+		gradient.addColorStop( 0.49, "rgb( 0,   255, 255 )" );
+		gradient.addColorStop( 0.67, "rgb( 0,   255,   0 )" );
+		gradient.addColorStop( 0.84, "rgb( 255, 255,   0 )" );
+		gradient.addColorStop( 1,    "rgb( 255,   0,   0 )" );
 
 		context.fillStyle = gradient;
 		context.fillRect( 0, 0, canvas.width, canvas.height );
 
-		// Create semi transparent gradient (white -> trans. -> black)
+		// Semi transparent gradient (white -> trans. -> black)
 		gradient = context.createLinearGradient( 0, 0, 0, canvas.height );
-		gradient.addColorStop( 0,   "rgba(255, 255, 255, 1)" );
-		gradient.addColorStop( 0.5, "rgba(255, 255, 255, 0)" );
-		gradient.addColorStop( 0.5, "rgba(0,     0,   0, 0)" );
-		gradient.addColorStop( 1,   "rgba(0,     0,   0, 1)" );
+		gradient.addColorStop( 0,   "rgba( 255, 255, 255, 1 )" );
+		gradient.addColorStop( 0.5, "rgba( 255, 255, 255, 0 )" );
+		gradient.addColorStop( 0.5, "rgba( 0,     0,   0, 0 )" );
+		gradient.addColorStop( 1,   "rgba( 0,     0,   0, 1 )" );
 
-		// Apply gradient to canvas
+		// Apply gradient
 		context.fillStyle = gradient;
 		context.fillRect( 0, 0, canvas.width, canvas.height );
 	}

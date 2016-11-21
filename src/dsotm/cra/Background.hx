@@ -7,6 +7,7 @@ import chrome.system.Display;
 
 class Background {
 
+
 	/*
 	static var connectionId : Int;
 
@@ -51,9 +52,23 @@ class Background {
 		}
 		*/
 
+	public static function test() {
+		return "darkness";
+	}
+
+	public function connect() {
+		return new js.Promise( function(resolve,reject){
+		});
+	}
+
+	public function disconnect() {
+	}
+
 	static function main() {
 
 		Runtime.onLaunched.addListener( function(?e) {
+
+			untyped window.backlight = Background;
 
 			Window.create( 'app.html',
 				{
@@ -61,16 +76,18 @@ class Background {
 					//visibleOnAllWorkspaces: true,
 					//state: fullscreen,
 					//bounds: display.bounds,
-					outerBounds: {
-						width: 400,
-						height: 500
-					}
+					//outerBounds: {
+						//width: 400,
+						//height: 500
+					//}
 				},
-				function(win:AppWindow){
+				function( win : AppWindow ) {
 					win.contentWindow.addEventListener( 'resize', function(e){
-					});
+
+					}, false );
 				}
 			);
         });
 	}
+
 }
