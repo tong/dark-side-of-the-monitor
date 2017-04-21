@@ -1,4 +1,4 @@
-package dsotm.gui;
+package darkside.gui;
 
 import js.Browser.document;
 import js.Browser.window;

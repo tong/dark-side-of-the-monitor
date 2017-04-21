@@ -1,0 +1,15 @@
+-cp src
+-lib electron
+-debug
+--each
+
+--next
+-js bin/main.js
+-main darkside.Main
+-lib hxnodejs-serialport
+
+--next
+-js bin/app.js
+-main darkside.App
+-lib om.app
+-cmd lessc res/style/darkside.less bin/darkside.css
