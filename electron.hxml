@@ -1,15 +1,21 @@
 -cp src
 -lib electron
+-lib om.core
 -debug
+-dce full
 --each
 
 --next
 -js bin/main.js
 -main darkside.Main
 -lib hxnodejs-serialport
+-lib hxargs
+-D electron_main
 
 --next
 -js bin/app.js
 -main darkside.App
--lib om.app
+#-lib om.app
+-lib om.tween
 -cmd lessc res/style/darkside.less bin/darkside.css
+-D electron_renderer

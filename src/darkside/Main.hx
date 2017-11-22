@@ -3,70 +3,71 @@ package darkside;
 import electron.main.BrowserWindow;
 import electron.main.IpcMain;
 import electron.main.WebContents;
-import haxe.Timer;
-import js.npm.SerialPort;
+import hxargs.Args;
+import js.node.Fs;
+import js.node.Http;
 
+@:require(electron)
 class Main {
 
+	static var web : js.node.http.Server;
+	static var win : BrowserWindow;
+
 	static var allowedDevices = [
-        {
-            vendorId : 0x2341,
-            productId : 0x0043,
-            //baudRate : _57600,
-        },
-        {
-            vendorId : 0x0403,
-            productId : 0x6001,
-            //baudRate : _57600,
-        },
-        {
-            vendorId : 0x2341,
-            productId : 0x0042
-        }
-    ];
+		'74034313938351717211' // Arduino Mega
+	];
 
 	static var controllers : Array<Controller>;
 
-	static function searchControllers( callback : Void->Void ) {
-
-		controllers = new Array<Controller>();
-
-		SerialPort.list( function(e,devices) {
-
-			if( e != null ) {
-                Sys.println( e );
-                Sys.exit( 1 );
-            }
-
-			for( dev in devices ) {
-
-                trace(dev);
-
-				var allowed = false;
-                for( allowedDevice in allowedDevices ) {
-                    if( allowedDevice.vendorId == Std.parseInt( dev.vendorId ) &&
-                    allowedDevice.productId == Std.parseInt( dev.productId ) ) {
-                        allowed = true;
-                        break;
-                    }
-                }
-                if( !allowed ) continue;
-                allowed = true;
-                for( controller in controllers )
-                    if( controller.port == dev.comName ){
-                        allowed = false;
-                        break;
-                    }
-                if( !allowed )
-                    continue;
-
-				var controller = new Controller( dev.comName, _115200 );
-				controllers.push( controller );
+	static function updateControllers( ?callback : Error->Void ) {
+		Controller.search( allowedDevices, function(e,devices){
+			if( e != null ) callback( e ) else {
+				for( dev in devices ) {
+					var already = false;
+					for( controller in controllers ) {
+						if( controller.port == dev.comName ){
+	                        already = true;
+	                        break;
+	                    }
+					}
+					if( !already ) {
+						var controller = new Controller( dev.comName, 115200 );
+						controllers.push( controller );
+					}
+				}
+				callback( null );
 			}
-
-			//callback( controllers );
-			callback();
 		});
+	}
+
+	static function openWindow() {
+		if( win != null )
+			return;
+
+		win = new BrowserWindow( {
+			width: 800, height: 400,
+			//frame: false,
+			useContentSize: true,
+			backgroundColor: '#141419',
+			show: false
+		} );
+		win.on( closed, function(e) {
+			win = null;
+			//if( js.Node.process.platform != 'darwin' ) electron.main.App.quit();
+		});
+		win.on( ready_to_show, function() {
+			win.setMenu( null );
+			win.show();
+		});
+		win.webContents.on( did_finish_load, function() {
+			#if debug
+			win.webContents.openDevTools();
+			#end
+			win.webContents.send( 'ping', 'whoooooooh!' );
+		});
+		win.loadURL( 'file://' + js.Node.__dirname + '/app.html' );
+
+		trace(win.webContents);
 	}
 
 	static function main() {
@@ -78,79 +79,132 @@ class Main {
 		});
 		#end
 
-		var args = Sys.args();
+		var gui = false;
+		var initialColor = 0xffffff;
 
-		searchControllers( function() {
+		var argHandler : ArgHandler;
 
-			if( controllers.length == 0 ) {
-				Sys.println( 'No controllers found' );
-				Sys.exit( 0 );
+		function usage() {
+			println( 'Usage : darkside [-g]' );
+			var doc = argHandler.getDoc();
+			var lines = doc.split('\n').map( l -> return '  $l' );
+			println( lines.join( '\n' ) );
+		}
+
+		argHandler = hxargs.Args.generate([
+
+			@doc("initial color")
+			["-c","--color"] => function(color:String) {
+				//TODO check input format
+				if( !color.startsWith('0x') ) color = '0x'+color; //color.substr(2);
+				var i = try Std.parseInt( color ) catch(e:Dynamic) {
+					trace(e);
+					return;
+				}
+				initialColor = i;
+			},
+
+			@doc("")
+			["-q","--quiet"] => () -> {
+			},
+
+			@doc("provide web interface")
+			["-w","--web"] => (port:Int,host:String) -> {
+			},
+
+			@doc("open graphical user interface")
+			["-g","--gui"] => () -> gui = true,
+
+			@doc("show help")
+			["-h","--help"] => () -> {
+				usage();
+				Sys.exit(0);
+			},
+
+			_ => (arg:String) -> {
+				println( 'Unknown command: $arg' );
+				Sys.exit(1);
 			}
+		]);
+		argHandler.parse( Sys.args() );
 
-			for( ctrl in controllers ) {
+		controllers = [];
 
-				ctrl.connect( function(e){
+		electron.main.App.on( 'ready', function(e) {
+			if( gui ) {
+				openWindow();
+			}
+		});
 
-					if( e != null ) {
-                        Sys.println( 'Failed to connect controller: $e' );
-                        Sys.exit( 1 );
-                    }
+		updateControllers( function(e){
+			if( e != null ) {
+				Sys.println( 'ERROR: '+e );
+				Sys.exit(1);
+			} else {
+				for( ctrl in controllers ) {
+					println( 'Connecting to '+ctrl );
+					ctrl.connect( function(e){
+						if( e != null ) {
+							println( e );
+						} else {
+							Timer.delay( function(){
+								//ctrl.setColor( initialColor );
+							}, 500 );
 
-					Sys.println( 'Controller connected (${ctrl.port})' );
-					controllers.push( ctrl );
-
-					/*
-					Timer.delay( function() {
-						ctrl.setColor( 0, 255, 0 );
-						Timer.delay( function() {
-							ctrl.disconnect( function(e){
-                                if( e != null ) {
-                                    trace(e);
-                                    Sys.exit(1);
-                                } else {
-                                    Sys.exit(0);
-                                }
-                            });
-						}, 200 );
-					}, 1000 );
-					*/
-				});
+						}
+					});
+				}
 			}
 		});
 
 		IpcMain.on( 'asynchronous-message', function(e,a) {
-			//trace(e);
+			var msg = Json.parse(a);
+			trace(msg);
+			switch msg.type {
+			case 'setColor':
+				for( ctrl in controllers )
+					ctrl.setColorRGB( msg.value[0], msg.value[1], msg.value[2] );
+			}
+
 			//trace(a);
 			//e.sender.send( 'asynchronous-reply', 'pong' );
+
+			/*
 			var c = a.split( ',' );
 			for( ctrl in controllers ) {
-				ctrl.setColor( c[0], c[1], c[2] );
+				ctrl.setColorRGB( c[0], c[1], c[2] );
 			}
+			*/
 		} );
 
-		electron.main.App.on( 'ready', function(e) {
-
-			var win = new BrowserWindow( {
-				width: 720, height: 480,
-				backgroundColor: '#000',
-				show: false
-			} );
-			win.on( closed, function(e) {
-				//if( js.Node.process.platform != 'darwin' ) electron.main.App.quit();
-			});
-			win.on( ready_to_show, function() {
-	            win.show();
-	        });
-			win.webContents.on( did_finish_load, function() {
-	            #if debug
-	            win.webContents.openDevTools();
-	            #end
-			});
-			win.loadURL( 'file://' + js.Node.__dirname + '/app.html' );
+		/// Readline
+		/*
+		var rl = js.node.Readline.createInterface({
+			input: process.stdin,
+			output: process.stdout,
+			prompt: 'DARKSIDE> '
 		});
+		rl.on( 'line', line -> {
+			trace(line);
+		});
+		rl.prompt();
+		*/
 
+		/// Read from named pipe
+		/*
+		var pipe = Fs.createReadStream( 'pipe' );
+		pipe.on( 'data', function(buf){
+			trace(buf.toString());
+		} );
+		*/
 
-
+		/*
+		web = js.node.Http.createServer( (req,res) -> {
+			res.writeHead( 200, {'Content-Type': 'text/plain'} );
+            res.end( 'Hello World\n' );
+		});
+		web.listen( 1100, '127.0.0.1' );
+		*/
 	}
 
 }

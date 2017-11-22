@@ -1,8 +1,8 @@
 {
-    "name"    : "darkside",
-    "version" : "0.0.0",
-    "description" : "Monitor backlight control",
-    "main"    : "main.js",
+    "name": "darkside",
+    "version": "0.0.0",
+    "description": "Monitor backlight control",
+    "main": "main.js",
     "repository": "https://github.com/rrreal/dark-side-of-the-monitor/",
     "license": "GPL"
 }

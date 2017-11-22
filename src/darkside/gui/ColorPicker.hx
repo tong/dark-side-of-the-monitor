@@ -23,14 +23,14 @@ class ColorPicker {
 	var context : CanvasRenderingContext2D;
 	var marker : DivElement;
 
-	public function new() {
+	public function new( width : Int, height : Int ) {
 
 		element = document.createDivElement();
 		element.classList.add( 'colorpicker' );
 
 		canvas = document.createCanvasElement();
-		canvas.width = window.innerWidth;
-		canvas.height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
 		element.appendChild( canvas );
 
 		//marker = document.createDivElement();

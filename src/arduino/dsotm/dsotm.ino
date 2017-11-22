@@ -1,108 +1,56 @@
 
-#include "darkside.h"
+#include "Darkside.h"
 
 #define PIN 2
 #define NUM_PIXELS 16
+//#define FRAME_DELTA 400
 
-static int frameDelta = 10;
+//Adafruit_NeoPixel strip = Adafruit_NeoPixel( NUM_PIXELS, PIN, NEO_GRB + NEO_KHZ800);
+//Darkside darkside(NUM_PIXELS,PIN);
+Darkside darkside(NUM_PIXELS,PIN);
+uint8_t brightness = 255;
+
+int color[3];
 
 void setup() {
 
     #if defined (__AVR_ATtiny85__)
-    if (F_CPU == 16000000) clock_prescale_set( clock_div_1 );
+    if( F_CPU == 16000000 ) clock_prescale_set( clock_div_1 );
     #endif
 
     Serial.begin( 115200 );
 
-    darkside_init( PIN, NUM_PIXELS );
-}
-
-void loop() {
-    darkside_loop();
-    delay( frameDelta );
-}
-
-/*
-#include <Adafruit_NeoPixel.h>
-
-#define PIN 2
-#define NUM_PIXELS 16
-
-Adafruit_NeoPixel light = Adafruit_NeoPixel( NUM_PIXELS, PIN, NEO_GRB + NEO_KHZ800 );
-
-//int colors[] = {2, 4, 8, 3, 6};
-
-void setColor( uint8_t r, uint8_t g, uint8_t b ) {
-    for( uint16_t i = 0; i < NUM_PIXELS; i++ ) {
-        light.setPixelColor( i, r, g, b );
-    }
-}
-
-void setup() {
-
-    #if defined (__AVR_ATtiny85__)
-    if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-    #endif
-
-    Serial.begin( 57600 );
-
-    //light.setBrightness( BRIGHTNESS );
-    light.begin();
-    //setColor( 255, 0, 0 );
-    light.show();
+    darkside.color( 255, 0, 0 );
 }
 
 void loop() {
 
-    light.begin();
-    light.show();
-
-    int available = Serial.available();
-
-    uint16_t i = 0;
-
-    for( i = 0; i < 32; i++ ) {
-        light.setPixelColor( i, 255, 255, 255 );
+    int bytesReceived = 0;
+    while( bytesReceived < 3 ) {
+        int available = Serial.available();
+        if( available > 0 ) {
+            color[bytesReceived] = Serial.read();
+            bytesReceived++;
+        }
     }
-    /*
-    for( ; i < 16; i++ ) {
-        light.setPixelColor( i, 255, 0, 0 );
-    }
-    for( ; i < 24; i++ ) {
-        light.setPixelColor( i, 0, 255, 0 );
-    }
-    for( ; i < 32; i++ ) {
-        light.setPixelColor( i, 0, 0, 255 );
-    }
-    * /
 
-    //setColor( 255, 255, 255 );
-    light.show();
-
-    delay( 100 );
+    darkside.begin();
+    for( int i = 0; i < darkside.numPixels(); i++ ) {
+        //darkside.setPixelColor( i, color );
+        darkside.setPixelColor( i, color[0], color[1], color[2] );
+    }
+    darkside.show();
 
     /*
-    int available = Serial.available();
-    //int i = Serial.read();
-    //Serial.println(i);
-    //Serial.println( "ccc" );
+    uint32_t c = (uint32_t) color[0] << 16;
+    c |= (uint32_t) color[1] << 8;
+    c |= (uint32_t) color[2];
+    Serial.print(c);
+    */
 
-    if( available > 0 ) {
-        int i = Serial.read();
-        light.begin();
-        setColor(255,255,255);
-        light.show();
-    } else  {
-
-        //light.begin();
-        //setColor( 255, 255, 0 );
-        //light.show();
+    /*
+    if( FRAME_DELTA > 0 ) {
+        //delay( FRAME_DELTA );
     }
-
-    //byte buf[4];
-    //Serial.readBytes( buf, 4 );
-
-    delay( 10 );
-    * /
+    */
 }
-*/

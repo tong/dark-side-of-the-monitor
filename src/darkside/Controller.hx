@@ -1,85 +1,61 @@
 package darkside;
 
-import haxe.Timer;
-import js.Error;
-import js.html.Uint8Array;
-import js.html.ArrayBuffer;
-import js.node.Buffer;
 import js.npm.SerialPort;
-import Sys.println;
 
 class Controller {
 
     public var port(default,null) : String;
-    public var baudrate(default,null) : BaudRate;
+    public var baudRate(default,null) : BaudRate;
+    public var connected(default,null) : Bool;
     //inline function get_port() return serial.port;
     //public var brightness(get,set) : Int;
 
     var serial : SerialPort;
     var lastSentColor : Int;
+    var isSending : Bool;
+    var sendBuffer : Array<Array<Int>>;
+    var colorToSet : Int;
 
-    public function new( port : String, baudrate : BaudRate ) {
+    public function new( port : String, baudRate : BaudRate ) {
         this.port = port;
-        this.baudrate = baudrate;
+        this.baudRate = baudRate;
+        connected = false;
+        isSending = false;
     }
 
 	public function connect( callback : Error->Void, firstByteDelay = 500 ) {
-
-        serial = new SerialPort( port, { baudrate: baudrate, autoOpen: false } );
+        serial = new SerialPort( port, { baudRate: baudRate } );
 		serial.on( 'error', function(e) trace(e) );
         serial.on( 'disconnect', function(e) trace(e) );
-		serial.open( function(e){
-
-            trace( 'Serialport connected' );
-
-			serial.on( 'close', function(e) {
-				//trace( "closed"+e );
-				//process.exit(0);
-			});
-			serial.on( 'data', function(buf){
-                trace(buf.toString());
-                /*
-                var result = buf.readInt8();
-                trace(result);
-                switch result {
-                case -1: //error
-                case 0:
-                    //callback( null );
+        serial.on( 'data', function(buf) {
+            trace( buf.toString() );
+            var c = Std.parseInt( buf.toString() );
+            trace(c,colorToSet);
+            if( c == colorToSet ) {
+                isSending = false;
+                if( sendBuffer.length > 0 ) {
+                    var c = sendBuffer.shift();
+                    setColorRGB( c[0], c[1], c[2] );
                 }
-                */
-			});
+            }
 
-            Timer.delay( function() {
-
-                /*
-                var buf = new Buffer(1);
-                buf.writeInt8( 3, 0 );
-                //buf.writeInt8( 2, 1 );
-                //buf.writeInt8( 6, 2 );
-                serial.write( buf );
-                */
-
-                /*
-                trace(">>>>");
-
-                var buf = new ArrayBuffer(1);
-                var view = new Uint8Array( buf );
-                view.set( [255], 0 );
-                serial.write( new Buffer( buf ), function(e) {
-                    if( e != null ) trace( 'Failed to write: '+e )
-                    else
-                        trace('Changed color');
-                });
-                */
-
+        });
+        serial.on( 'open', function() {
+            trace( 'Serialport connected: '+port );
+            connected = true;
+            sendBuffer = [];
+            if( firstByteDelay == null || firstByteDelay == 0 )
                 callback( null );
-
-            }, firstByteDelay );
-		});
+            else {
+                Timer.delay( function() callback( null ), firstByteDelay );
+            }
+        });
 	}
 
 	public function disconnect( ?callback : Error->Void ) {
-		if( serial != null ) {
+		if( connected ) {
+            connected = false;
+            sendBuffer = [];
 			serial.close( callback );
 		}
 	}
@@ -92,61 +68,67 @@ class Controller {
     }
     */
 
-    public function setColor( r : Int, g : Int, b : Int, ?callback : Void->Void ) {
+    public function setColor( color : Int, ?callback : Void->Void ) {
+        setColorRGB( color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF, callback );
+    }
 
-        /*
-		if( lastSentColor != null && color == lastSentColor )
-			return;
+    public function setColorRGB( r : Int, g : Int, b : Int, ?callback : Void->Void ) {
 
-		var buf = new ArrayBuffer(4);
-		var view = new Uint8Array( buf );
-		view.set( [0,color.r,color.g,color.b], 0 );
-		serial.write( new Buffer( buf ), function(e){
-			lastSentColor = color;
-			if( callback != null ) callback();
-			/*
-			serial.flush(function(e){
-				serial.drain(function(e){
-					trace( "DRAIN"+e );
-					if( callback != null ) callback();
-				});
-			});
-		});
-        */
+        if( !connected )
+            throw 'not connected';
 
-        /*
-        var buf = new ArrayBuffer( 3 );
-        var view = new Uint8Array( buf );
-        view.set( [color], 0 );
-        serial.write( new Buffer( buf ), function(e){
-            trace(e);
-        });
-        */
+        var rgb = [r,g,b];
+        var color = ColorUtil.rgbToInt( r, g, b );
+        if( color == lastSentColor ) {
+            return;
+        }
 
-        var buf = new ArrayBuffer( 3 );
-        var view = new Uint8Array( buf );
-        view.set( [r,g,b], 0 );
-        serial.write( new Buffer( buf ), function(e){
+        if( isSending ) {
+            sendBuffer.push( rgb );
+            return;
+        }
+
+        isSending = true;
+
+        var abuf = new ArrayBuffer( 3 );
+        var view = new Uint8Array( abuf );
+        view.set( rgb );
+        var buf = new Buffer( abuf );
+        serial.write( buf, function(e){
             if( e != null ) trace(e);
+            serial.flush( function(e){
+                if( e != null ) trace(e) else {
+                    //	serial.drain(function(e){
+                    lastSentColor = color;
+                    isSending = false;
+                    if( sendBuffer.length > 0 ) {
+                        var c = sendBuffer.shift();
+                        setColorRGB( c[0], c[1], c[2] );
+                    }
+                }
+            });
         });
-
-
-        /*
-        var buf = new ArrayBuffer(4);
-        var view = new js.html.Uint32Array( buf );
-        view.set( [color], 0 );
-        serial.write( new Buffer( buf ), function(e){
-            if( e != null ) trace(e);
-        });
-        */
-
-        /*
-        var buf = new ArrayBuffer(1);
-        var view = new Uint8Array( buf );
-        view.set( [color], 0 );
-        serial.write( new Buffer( buf ), function(e){
-            trace(e);
-        });
-        */
 	}
+
+    public static function search( allowedDevices : Array<String>, callback : Error->Array<SerialPortInfo>->Void ) {
+        SerialPort.list( function(e,infos) {
+            if( e != null ) {
+                callback( e, null );
+            } else {
+                var devices = new Array<SerialPortInfo>();
+                for( dev in infos ) {
+                    var allowed = false;
+    				for( allowedDevice in allowedDevices ) {
+    					if( dev.serialNumber == allowedDevice ) {
+    						allowed = true;
+                            break;
+    					}
+    				}
+                    if( allowed ) devices.push( dev );
+                }
+                callback( null, devices );
+            }
+        });
+    }
+
 }

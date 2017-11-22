@@ -2,6 +2,7 @@
 _*
 *.zip
 bin/
+src/arduino/dsotm/*.hx
 src/npm/
 tmp/
 TODO*
