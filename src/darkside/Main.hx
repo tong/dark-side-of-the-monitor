@@ -12,6 +12,7 @@ class Main {
 
 	static var web : js.node.http.Server;
 	static var win : BrowserWindow;
+	static var color : Int;
 
 	static var allowedDevices = [
 		'74034313938351717211' // Arduino Mega
@@ -45,13 +46,14 @@ class Main {
 			return;
 
 		win = new BrowserWindow( {
-			width: 800, height: 400,
+			width: 320, height: 480,
 			//frame: false,
-			useContentSize: true,
-			backgroundColor: '#141419',
-			show: false
+			//useContentSize: true,
+			backgroundColor: '#101010',
+			show: false,
+			frame: false,
 		} );
-		win.on( closed, function(e) {
+		win.on( closed, function() {
 			win = null;
 			//if( js.Node.process.platform != 'darwin' ) electron.main.App.quit();
 		});
@@ -61,16 +63,18 @@ class Main {
 		});
 		win.webContents.on( did_finish_load, function() {
 			#if debug
-			win.webContents.openDevTools();
+			//win.webContents.openDevTools();
 			#end
-			win.webContents.send( 'ping', 'whoooooooh!' );
+			//win.webContents.send( 'ping', 'whoooooooh!' );
 		});
 		win.loadURL( 'file://' + js.Node.__dirname + '/app.html' );
 
-		trace(win.webContents);
+		//trace(win.webContents);
 	}
 
 	static function main() {
+
+		Sys.println( '\x1B[41m \x1B[42m \x1B[44m \x1B[0m' );
 
 		#if !debug
 		electron.CrashReporter.start({
@@ -79,8 +83,9 @@ class Main {
 		});
 		#end
 
+		color = 0xffffff;
+
 		var gui = false;
-		var initialColor = 0xffffff;
 
 		var argHandler : ArgHandler;
 
@@ -101,9 +106,10 @@ class Main {
 					trace(e);
 					return;
 				}
-				initialColor = i;
+				Main.color = i;
 			},
 
+			/*
 			@doc("")
 			["-q","--quiet"] => () -> {
 			},
@@ -111,6 +117,7 @@ class Main {
 			@doc("provide web interface")
 			["-w","--web"] => (port:Int,host:String) -> {
 			},
+			*/
 
 			@doc("open graphical user interface")
 			["-g","--gui"] => () -> gui = true,
@@ -148,7 +155,7 @@ class Main {
 							println( e );
 						} else {
 							Timer.delay( function(){
-								//ctrl.setColor( initialColor );
+								ctrl.setColor( color );
 							}, 500 );
 
 						}
@@ -159,11 +166,16 @@ class Main {
 
 		IpcMain.on( 'asynchronous-message', function(e,a) {
 			var msg = Json.parse(a);
-			trace(msg);
+			//trace(msg);
 			switch msg.type {
 			case 'setColor':
-				for( ctrl in controllers )
-					ctrl.setColorRGB( msg.value[0], msg.value[1], msg.value[2] );
+				var rgb = msg.value;
+				//trace(rgb);
+				for( ctrl in controllers ) {
+					if( !ctrl.connected )
+						continue;
+					ctrl.setColorRGB( rgb[0], rgb[1], rgb[2] );
+				}
 			}
 
 			//trace(a);

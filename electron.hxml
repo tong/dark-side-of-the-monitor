@@ -15,7 +15,8 @@
 --next
 -js bin/app.js
 -main darkside.App
-#-lib om.app
+-lib om.net
 -lib om.tween
--cmd lessc res/style/darkside.less bin/darkside.css
+-cmd lessc res/style/darkside.less bin/app.css
+-cmd cp -u res/html/app.html bin/app.html
 -D electron_renderer

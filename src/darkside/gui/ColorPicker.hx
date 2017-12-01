@@ -1,10 +1,9 @@
 package darkside.gui;
 
-import js.Browser.document;
-import js.Browser.window;
-import js.html.DivElement;
-import js.html.CanvasElement;
-import js.html.CanvasRenderingContext2D;
+typedef Point = {
+	var x : Int;
+	var y : Int;
+}
 
 class ColorPicker {
 
@@ -33,9 +32,11 @@ class ColorPicker {
 		canvas.height = height;
 		element.appendChild( canvas );
 
-		//marker = document.createDivElement();
-		//marker.style.position = 'absolute';
-		//element.appendChild( marker );
+		marker = document.createDivElement();
+		marker.classList.add( 'marker' );
+		marker.style.top = '100px';
+		marker.style.left = '100px';
+		element.appendChild( marker );
 
 		context = canvas.getContext2d();
 
@@ -56,6 +57,11 @@ class ColorPicker {
 
 	public function hide() {
 		element.style.display = 'none';
+	}
+
+	public function getPositionForColor( color : Int ) : Point {
+		//TODO
+		return null;
 	}
 
 	public function getColorAtPosition( x : Int, y : Int ) : Array<Int> {
@@ -95,7 +101,10 @@ class ColorPicker {
 		onSelect( color );
 	}
 
-	function handleMouseMove(e) {
+	function handleMouseMove( e : MouseEvent ) {
+		console.debug( e);
+		marker.style.top = e.clientY + 'px';
+		marker.style.left = e.clientX + 'px';
 		onSelect( getColorAtPosition( e.offsetX, e.offsetY ) );
 	}
 

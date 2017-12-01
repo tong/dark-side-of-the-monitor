@@ -5,8 +5,7 @@ import electron.renderer.IpcRenderer;
 //import om.Tween;
 import om.ease.*;
 
-//class App implements om.App {
-class App{
+class App {
 
 	static var timeStart : Float;
 	static var timer : Timer;
@@ -15,18 +14,18 @@ class App{
 
 	static function update() {
 
-
-	/*
-		index++;
-		if( index == 256 ) index = 0;
+		/*
+		if( ++index >= 256 ) index = 0;
 		var rgb = ColorUtil.wheel( index );
+		rgb.push(255);
 		buffer = rgb;
 		*/
 
 		//var elapsed = Time.now() - timeStart;
 
 		if( buffer != null ) {
-			IpcRenderer.send( 'asynchronous-message', Json.stringify( { type: 'setColor', value: buffer } ) );
+			var msg = Json.stringify( { type: 'setColor', value: buffer } );
+			IpcRenderer.send( 'asynchronous-message', msg );
 			buffer = null;
 		}
 	}
@@ -41,17 +40,30 @@ class App{
 			trace(e,m);
 		});
 
-		var fps = 100;
-		var picker = new ColorPicker( window.innerWidth, window.innerHeight );
-		picker.onSelect = function(c){
-			buffer = c;
-		}
-		document.body.appendChild( picker.element );
+		var fps = 90;
 
-		timeStart = Time.now();
+		var element = document.querySelector( '.darkside' );
 
-		timer = new Timer( Std.int( 1000 / fps ) );
-		timer.run = update;
+		var info = document.createDivElement();
+		info.classList.add( 'info' );
+		info.textContent = 'DARKSIDE';
+		element.appendChild( info );
+
+		var picker = new ColorPicker( Std.int( window.innerWidth - 20 ), Std.int( window.innerHeight - 20 ) );
+		picker.onSelect = function(c) buffer = c;
+		element.appendChild( picker.element );
+
+		//var html = haxe.Resource.getString( 'colorpicker.html' );
+		//element.innerHTML = html;
+
+		//var color = document.createInputElement();
+		//color.type = 'color';
+		//element.appendChild( color );
+
+		Timer.delay( function(){
+			timer = new Timer( Std.int( 1000/fps ) );
+			timer.run = update;
+		}, 500 );
 
 		/*
 		var obj = { v:0 };
@@ -67,5 +79,6 @@ class App{
 
 
 	}
+
 
 }
